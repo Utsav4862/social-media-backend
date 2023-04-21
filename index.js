@@ -16,9 +16,9 @@ app.use(
   })
 );
 
-const routes = require("./Routes/main");
+const routes = require("./routes/index");
 app.use(cors());
 app.use(express.json());
 app.use(express.static("uploads"));
-app.use("/api", routes);
+app.use("/", routes);
 const server = app.listen(port);

@@ -21,10 +21,12 @@ const userSchema = new mongoose.Schema({
       "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
   },
 
-  follower: {
-    type: [mongoose.Schema.Types.ObjectId],
-    ref: "User",
-  },
+  follower: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+  ],
 
   following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 });

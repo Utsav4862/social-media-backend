@@ -6,11 +6,15 @@ const {
   createPost,
   likePost,
   unLikePost,
+  getFollowingUserPosts,
+  getMyPosts,
 } = require("../controller/postController");
 const router = express.Router();
 
 router.post("/create", auth, multerSt, createPost);
 router.put("/like/:id", auth, likePost);
 router.put("/unlike/:id", auth, unLikePost);
+router.get("/following", auth, getFollowingUserPosts);
+router.get("/my", auth, getMyPosts);
 
 module.exports = router;

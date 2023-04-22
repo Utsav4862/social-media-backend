@@ -1,3 +1,4 @@
+const User = require("../Model/User");
 const Post = require("../model/Post");
 
 const createPost = async (req, res) => {
@@ -30,7 +31,6 @@ const likePost = async (req, res) => {
       }
     );
 
-    // console.log(resp);
     if (resp) res.send(resp);
   } catch (error) {
     throw new Error(error.message);
@@ -57,4 +57,36 @@ const unLikePost = async (req, res) => {
   }
 };
 
-module.exports = { createPost, likePost, unLikePost };
+const getFollowingUserPosts = async (req, res) => {
+  try {
+    const user = req.user;
+
+    let posts = await Post.find({ user: { $in: user.following } });
+
+    console.log(posts);
+    res.send(posts);
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+const getMyPosts = async (req, res) => {
+  try {
+    const user = req.user;
+
+    let posts = await Post.find({ user: user._id });
+
+    console.log(posts);
+    res.send(posts);
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+module.exports = {
+  createPost,
+  likePost,
+  unLikePost,
+  getFollowingUserPosts,
+  getMyPosts,
+};

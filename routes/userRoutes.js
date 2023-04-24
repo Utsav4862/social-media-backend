@@ -4,8 +4,12 @@ const {
   login,
   doFollow,
   doUnFollow,
+  searchUser,
+  updateProfile,
+  userNameExist,
 } = require("../controller/userController");
 const { auth } = require("../middleware/auth");
+const { multerSt } = require("../middleware/multer");
 // const { multerSt } = require("../middleware/multer");
 
 const router = express.Router();
@@ -14,6 +18,9 @@ router.post("/signup", signUp);
 router.post("/login", login);
 router.put("/follow/:id", auth, doFollow);
 router.put("/unFollow/:id", auth, doUnFollow);
+router.get("/searchUser", auth, searchUser);
+router.post("/update", auth, multerSt, updateProfile);
+router.get("/exist/:uname", auth, userNameExist);
 
 // router.post("/sendEmail", sendVerificationEmail);
 // router.put("/updateImage", auth, multerSt, updateImage);

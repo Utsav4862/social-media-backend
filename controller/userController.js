@@ -119,4 +119,109 @@ const doUnFollow = async (req, res) => {
   }
 };
 
-module.exports = { signUp, login, doFollow, doUnFollow };
+const searchUser = async (req, res) => {
+  try {
+    const user = req.user;
+    console.log(req.query.search);
+
+    const keyword = req.query.search
+      ? {
+          $or: [
+            { username: { $regex: req.query.search, $options: "i" } },
+            {
+              name: { $regex: req.query.search, $options: "i" },
+            },
+          ],
+        }
+      : {};
+
+    const resp = await User.find(keyword);
+
+    res.send(resp);
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+const userNameExist = async (req, res) => {
+  try {
+    const user = req.user;
+
+    const userExist = await User.find({
+      username: { $ne: user.username },
+    }).find({ username: req.params.uname });
+
+    if (userExist.length !== 0) {
+      res.send({ error: "username already exists" });
+    } else {
+      res.send({ success: true });
+    }
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+const updateProfile = async (req, res) => {
+  try {
+    const user = req.user;
+    console.log(req.file);
+    const { name, username, password } = req.body;
+    console.log(name);
+    const verifyPass = await bcrypt.compare(password, user.password);
+
+    if (!verifyPass) {
+      res.send({ error: "Password is wrong" });
+      return;
+    }
+
+    if (verifyPass) {
+      let image;
+      if (req.file) {
+        image =
+          (await req.protocol) +
+          "://" +
+          req.get("host") +
+          "/" +
+          req.file.filename;
+
+        console.log(image);
+      }
+      let updateResult = await User.findByIdAndUpdate(
+        user._id,
+        {
+          username: username,
+          name: name,
+        },
+        {
+          new: true,
+        }
+      );
+      console.log(updateResult);
+      if (req.file) {
+        updateResult = await User.findByIdAndUpdate(
+          user._id,
+          {
+            profile_img: image,
+          },
+          {
+            new: true,
+          }
+        );
+      }
+
+      res.send(updateResult);
+    }
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+module.exports = {
+  signUp,
+  login,
+  doFollow,
+  doUnFollow,
+  searchUser,
+  updateProfile,
+  userNameExist,
+};

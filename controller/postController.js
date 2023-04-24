@@ -61,9 +61,12 @@ const getFollowingUserPosts = async (req, res) => {
   try {
     const user = req.user;
 
-    let posts = await Post.find({ user: { $in: user.following } });
+    let posts = await Post.find({ user: { $in: user.following } }).populate(
+      "user",
+      "-password"
+    );
 
-    console.log(posts);
+    // console.log(posts);
     res.send(posts);
   } catch (error) {
     throw new Error(error.message);
@@ -83,10 +86,34 @@ const getMyPosts = async (req, res) => {
   }
 };
 
+const deletePost = async (req, res) => {
+  try {
+    const user = req.user;
+
+    let post = await Post.findOne({ _id: req.params.id });
+
+    // console.log(post);
+
+    let delPost;
+    if (post.user == user._id) {
+      delPost = await Post.findByIdAndDelete(req.params.id, { new: true });
+    }
+
+    if (delPost) {
+      res.send({ success: "Post Deleted" });
+    } else {
+      res.send({ error: "Something went wrong" });
+    }
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
 module.exports = {
   createPost,
   likePost,
   unLikePost,
   getFollowingUserPosts,
   getMyPosts,
+  deletePost,
 };

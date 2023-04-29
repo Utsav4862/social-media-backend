@@ -19,8 +19,9 @@ const createPost = async (req, res) => {
 const likePost = async (req, res) => {
   try {
     const user = await req.user;
-    console.log(user);
-    console.log(req.params.id);
+    // console.log(req.headers);
+    // console.log(user);
+    // console.log(req.params.id);
     let resp = await Post.findByIdAndUpdate(
       req.params.id,
       {
@@ -29,7 +30,7 @@ const likePost = async (req, res) => {
       {
         new: true,
       }
-    );
+    ).populate("user", "-password");
 
     if (resp) res.send(resp);
   } catch (error) {
@@ -49,7 +50,7 @@ const unLikePost = async (req, res) => {
       {
         new: true,
       }
-    );
+    ).populate("user", "-password");
 
     if (resp) res.send(resp);
   } catch (error) {
@@ -59,12 +60,14 @@ const unLikePost = async (req, res) => {
 
 const getFollowingUserPosts = async (req, res) => {
   try {
-    const user = req.user;
+    let user = req.user;
 
-    let posts = await Post.find({ user: { $in: user.following } }).populate(
-      "user",
-      "-password"
-    );
+    // console.log(user.following);
+    let posts = await Post.find({
+      $or: [{ user: { $in: user.following } }, { user: user._id }],
+    })
+      .populate("user", "-password")
+      .sort({ createdAt: -1 });
 
     // console.log(posts);
     res.send(posts);
@@ -75,11 +78,11 @@ const getFollowingUserPosts = async (req, res) => {
 
 const getMyPosts = async (req, res) => {
   try {
-    const user = req.user;
+    const id = req.params.id;
+    // console.log(id);
+    let posts = await Post.find({ user: id }).sort({ createdAt: -1 });
 
-    let posts = await Post.find({ user: user._id });
-
-    console.log(posts);
+    // console.log(posts);
     res.send(posts);
   } catch (error) {
     throw new Error(error.message);

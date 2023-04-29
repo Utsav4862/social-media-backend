@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 app.use(express.json());
 const jwt = require("jsonwebtoken");
 const User = require("../Model/User");
-const { error } = require("console");
+const { error, log } = require("console");
 const key = process.env.JWT_KEY;
 
 const signUp = async (req, res) => {
@@ -39,15 +39,16 @@ const signUp = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { emailOrUser, password } = req.body;
-    const user =
+    let user =
       (await User.findOne({ email: emailOrUser })) ||
       (await User.findOne({ username: emailOrUser }));
 
     if (user) {
       const verifyPass = await bcrypt.compare(password, user.password);
       if (verifyPass) {
-        const token = await jwt.sign({ user }, key);
-        await res.send({ token });
+        // user = await user.populate("following follower", "-password");
+        const token = await jwt.sign({ id: user._id }, key);
+        await res.send({ token, user });
       } else {
         res.send({ error: "Password is Wrong" });
       }
@@ -59,11 +60,22 @@ const login = async (req, res) => {
   }
 };
 
+const getCurrentUser = async (req, res) => {
+  try {
+    let user = await req.user;
+    // user = await User.findById(user._id);
+    // console.log(user);
+    res.send(user);
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
 const doFollow = async (req, res) => {
   try {
     const user = req.user;
     const followerId = req.params.id;
-
+    console.log(followerId);
     let resp1 = await User.findByIdAndUpdate(
       user._id,
       {
@@ -83,7 +95,10 @@ const doFollow = async (req, res) => {
         new: true,
       }
     );
-    if (resp1 && resp2) res.send({ result: "Followed Successfully" });
+    // console.log(resp1);
+    // console.log(resp2);
+    if (resp1 && resp2) res.send({ result: "Followed successfully" });
+    else res.send({ error: "error occured" });
   } catch (error) {
     throw new Error(error.message);
   }
@@ -113,7 +128,21 @@ const doUnFollow = async (req, res) => {
         new: true,
       }
     );
+    // console.log(resp1);
+    // console.log(resp2);
     if (resp1 && resp2) res.send({ result: "un-Followed Successfully" });
+    else res.send({ error: "error occured" });
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+const getExactUser = async (req, res) => {
+  try {
+    const uname = req.params.uname;
+    let user = await User.findOne({ username: uname }).select("-password");
+
+    res.send(user);
   } catch (error) {
     throw new Error(error.message);
   }
@@ -122,7 +151,11 @@ const doUnFollow = async (req, res) => {
 const searchUser = async (req, res) => {
   try {
     const user = req.user;
-    console.log(req.query.search);
+
+    if (req.query.search == "") {
+      res.send([]);
+      return;
+    }
 
     const keyword = req.query.search
       ? {
@@ -143,13 +176,33 @@ const searchUser = async (req, res) => {
   }
 };
 
+const checkUsername = async (req, res) => {
+  try {
+    let uname = req.params.uname;
+    let userExist = await User.exists({ username: uname });
+    if (userExist) {
+      res.send({ error: "username already exist" });
+    } else {
+      res.send({ success: true });
+    }
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
 const userNameExist = async (req, res) => {
   try {
     const user = req.user;
+    const newArr = [...user.following, user._id];
+    // console.log(req.params.uname);
 
-    const userExist = await User.find({
+    let users = await User.find({
       username: { $ne: user.username },
-    }).find({ username: req.params.uname });
+    });
+
+    let userExist = await User.find({
+      $and: [{ _id: { $in: users } }, { username: { $eq: req.params.uname } }],
+    });
 
     if (userExist.length !== 0) {
       res.send({ error: "username already exists" });
@@ -164,9 +217,9 @@ const userNameExist = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const user = req.user;
-    console.log(req.file);
+
     const { name, username, password } = req.body;
-    console.log(name);
+
     const verifyPass = await bcrypt.compare(password, user.password);
 
     if (!verifyPass) {
@@ -184,7 +237,7 @@ const updateProfile = async (req, res) => {
           "/" +
           req.file.filename;
 
-        console.log(image);
+        // console.log(image);
       }
       let updateResult = await User.findByIdAndUpdate(
         user._id,
@@ -196,7 +249,7 @@ const updateProfile = async (req, res) => {
           new: true,
         }
       );
-      console.log(updateResult);
+      // console.log(updateResult);
       if (req.file) {
         updateResult = await User.findByIdAndUpdate(
           user._id,
@@ -224,4 +277,7 @@ module.exports = {
   searchUser,
   updateProfile,
   userNameExist,
+  checkUsername,
+  getCurrentUser,
+  getExactUser,
 };

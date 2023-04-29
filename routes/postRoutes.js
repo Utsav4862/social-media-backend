@@ -16,7 +16,7 @@ router.post("/create", auth, multerSt, createPost);
 router.put("/like/:id", auth, likePost);
 router.put("/unlike/:id", auth, unLikePost);
 router.get("/following", auth, getFollowingUserPosts);
-router.get("/my", auth, getMyPosts);
+router.get("/user/:id", auth, getMyPosts);
 router.delete("/:id", auth, deletePost);
 
 module.exports = router;

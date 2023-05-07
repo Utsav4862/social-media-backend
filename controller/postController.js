@@ -93,15 +93,14 @@ const deletePost = async (req, res) => {
   try {
     const user = req.user;
 
-    let post = await Post.findOne({ _id: req.params.id });
-
     // console.log(post);
 
     let delPost;
-    if (post.user == user._id) {
-      delPost = await Post.findByIdAndDelete(req.params.id, { new: true });
-    }
+    // console.log(post.user);
 
+    delPost = await Post.findByIdAndDelete(req.params.id, { new: true });
+
+    console.log(delPost);
     if (delPost) {
       res.send({ success: "Post Deleted" });
     } else {

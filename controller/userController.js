@@ -218,51 +218,46 @@ const updateProfile = async (req, res) => {
   try {
     const user = req.user;
 
-    const { name, username, password } = req.body;
+    const { name, username } = req.body;
 
-    const verifyPass = await bcrypt.compare(password, user.password);
+    let image;
+    if (req.file) {
+      image =
+        (await req.protocol) +
+        "://" +
+        req.get("host") +
+        "/" +
+        req.file.filename;
 
-    if (!verifyPass) {
-      res.send({ error: "Password is wrong" });
-      return;
+      // console.log(image);
     }
-
-    if (verifyPass) {
-      let image;
-      if (req.file) {
-        image =
-          (await req.protocol) +
-          "://" +
-          req.get("host") +
-          "/" +
-          req.file.filename;
-
-        // console.log(image);
+    let updateResult = await User.findByIdAndUpdate(
+      user._id,
+      {
+        username: username,
+        name: name,
+      },
+      {
+        new: true,
       }
-      let updateResult = await User.findByIdAndUpdate(
+    );
+    // console.log(updateResult);
+    if (req.file) {
+      updateResult = await User.findByIdAndUpdate(
         user._id,
         {
-          username: username,
-          name: name,
+          profile_img: image,
         },
         {
           new: true,
         }
       );
-      // console.log(updateResult);
-      if (req.file) {
-        updateResult = await User.findByIdAndUpdate(
-          user._id,
-          {
-            profile_img: image,
-          },
-          {
-            new: true,
-          }
-        );
-      }
+    }
 
-      res.send(updateResult);
+    if (updateResult) {
+      res.send({ result: "Profile Updated Successfully" });
+    } else {
+      res.send({ error: "Error occurred" });
     }
   } catch (error) {
     throw new Error(error.message);

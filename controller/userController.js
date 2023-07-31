@@ -5,6 +5,10 @@ app.use(express.json());
 const jwt = require("jsonwebtoken");
 const User = require("../Model/User");
 const { error, log } = require("console");
+const fs = require("fs");
+const { promisify } = require("util");
+const unlinkAsync = promisify(fs.unlink);
+const cloudinary = require("../cloudinary");
 const key = process.env.JWT_KEY;
 
 const signUp = async (req, res) => {
@@ -75,7 +79,7 @@ const doFollow = async (req, res) => {
   try {
     const user = req.user;
     const followerId = req.params.id;
-    console.log(followerId);
+  
     let resp1 = await User.findByIdAndUpdate(
       user._id,
       {
@@ -95,8 +99,8 @@ const doFollow = async (req, res) => {
         new: true,
       }
     );
-    // console.log(resp1);
-    // console.log(resp2);
+  
+    
     if (resp1 && resp2) res.send({ result: "Followed successfully" });
     else res.send({ error: "error occured" });
   } catch (error) {
@@ -108,7 +112,7 @@ const doUnFollow = async (req, res) => {
   try {
     const user = req.user;
     const unFollowerId = req.params.id;
-    // console.log();
+ 
     let resp1 = await User.findByIdAndUpdate(
       user._id,
       {
@@ -128,8 +132,7 @@ const doUnFollow = async (req, res) => {
         new: true,
       }
     );
-    // console.log(resp1);
-    // console.log(resp2);
+
     if (resp1 && resp2) res.send({ result: "un-Followed Successfully" });
     else res.send({ error: "error occured" });
   } catch (error) {
@@ -194,7 +197,6 @@ const userNameExist = async (req, res) => {
   try {
     const user = req.user;
     const newArr = [...user.following, user._id];
-    // console.log(req.params.uname);
 
     let users = await User.find({
       username: { $ne: user.username },
@@ -219,18 +221,9 @@ const updateProfile = async (req, res) => {
     const user = req.user;
 
     const { name, username } = req.body;
-
-    let image;
-    if (req.file) {
-      image =
-        (await req.protocol) +
-        "://" +
-        req.get("host") +
-        "/" +
-        req.file.filename;
-
-      // console.log(image);
-    }
+    const image = req.file
+    let result = await cloudinary.cloudinaryUpload(image.path);
+    await unlinkAsync(image.path)
     let updateResult = await User.findByIdAndUpdate(
       user._id,
       {
@@ -241,12 +234,12 @@ const updateProfile = async (req, res) => {
         new: true,
       }
     );
-    // console.log(updateResult);
+ 
     if (req.file) {
       updateResult = await User.findByIdAndUpdate(
         user._id,
         {
-          profile_img: image,
+          profile_img: result.secure_url,
         },
         {
           new: true,

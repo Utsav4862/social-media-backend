@@ -1,14 +1,19 @@
 const User = require("../Model/User");
 const Post = require("../model/Post");
+const fs = require("fs");
+const { promisify } = require("util");
+const unlinkAsync = promisify(fs.unlink);
+const cloudinary = require("../cloudinary");
+
 
 const createPost = async (req, res) => {
   try {
     const user = req.user;
     const { caption } = req.body;
-    const image =
-      (await req.protocol) + "://" + req.get("host") + "/" + req.file.filename;
-
-    let post = await Post.create({ image, caption, user: user._id });
+    const image = req.file
+    let result = await cloudinary.cloudinaryUpload(image.path);
+    await unlinkAsync(image.path);
+    let post = await Post.create({ image:result.secure_url, caption, user: user._id });
 
     res.send(post);
   } catch (error) {
@@ -19,9 +24,6 @@ const createPost = async (req, res) => {
 const likePost = async (req, res) => {
   try {
     const user = await req.user;
-    // console.log(req.headers);
-    // console.log(user);
-    // console.log(req.params.id);
     let resp = await Post.findByIdAndUpdate(
       req.params.id,
       {

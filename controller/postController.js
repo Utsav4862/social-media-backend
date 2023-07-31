@@ -1,5 +1,5 @@
 const User = require("../Model/User");
-const Post = require("../model/Post");
+const Post = require("../Model/Post");
 const fs = require("fs");
 const { promisify } = require("util");
 const unlinkAsync = promisify(fs.unlink);

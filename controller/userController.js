@@ -3,7 +3,7 @@ const app = express();
 const bcrypt = require("bcrypt");
 app.use(express.json());
 const jwt = require("jsonwebtoken");
-const User = require("../Model/User");
+const User = require("../models/User");
 const { error, log } = require("console");
 const fs = require("fs");
 const { promisify } = require("util");
